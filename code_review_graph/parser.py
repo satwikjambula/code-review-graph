@@ -4358,7 +4358,11 @@ class CodeParser:
     # `log_event$v2`, `calc#total`). `\w+` alone truncates at the `$`/`#`,
     # which then cascades into `_plsql_block_end` searching for the wrong
     # (truncated) terminator name and mis-bounding the whole block.
-    _PLSQL_IDENT = r"[A-Za-z_][A-Za-z0-9_$#]*"
+    # The leading class is `[^\W\d]` rather than `[A-Za-z_]` so the first
+    # character stays Unicode-aware (matching `\w`'s own default behavior
+    # elsewhere in this file, e.g. `_SQL_TABLE_RE`) instead of silently
+    # truncating identifiers like `café` at the accented letter.
+    _PLSQL_IDENT = r"[^\W\d][\w$#]*"
 
     # Regex for CREATE PROCEDURE — tree-sitter SQL grammar emits an ERROR node
     # for this statement, so we fall back to a regex scan. Leading `\b`

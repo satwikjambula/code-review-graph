@@ -4383,6 +4383,23 @@ class TestPLSQLHelpers:
         sig = CodeParser._plsql_member_signature(text, start)
         assert sig == "p_x VARCHAR2 := '('"
 
+    def test_identifier_preserves_non_ascii_letters(self):
+        # _PLSQL_IDENT used to be [A-Za-z_][A-Za-z0-9_$#]*, which silently
+        # truncated identifiers at the first non-ASCII letter (e.g. "café"
+        # became "caf"), unlike the \w-based regexes used for non-Oracle
+        # SQL elsewhere in this file, which are Unicode-aware by default.
+        text = "CREATE PROCEDURE café AS SELECT 1;"
+        m = CodeParser._SQL_PROC_RE.search(text)
+        assert m is not None and m.group(1) == "café"
+
+    def test_identifier_still_stops_before_dollar_and_hash_start(self):
+        # $/# are valid mid-identifier but not as the very first character,
+        # matching Oracle's own identifier rules.
+        import re
+
+        assert re.match(CodeParser._PLSQL_IDENT, "$bad") is None
+        assert re.match(CodeParser._PLSQL_IDENT, "#bad") is None
+
     def test_call_extraction_is_not_quadratic_on_many_calls(self):
         # _extract_plsql_calls used body_text[:m.start()] (re-slicing and
         # re-scanning the whole preceding text) for the INSERT INTO check

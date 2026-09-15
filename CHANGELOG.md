@@ -2,6 +2,17 @@
 
 ## [Unreleased]
 
+### Fixed
+
+- PL/SQL identifiers with non-ASCII letters (e.g. `café`) were silently
+  truncated at the first accented character (`_PLSQL_IDENT` was
+  `[A-Za-z_][A-Za-z0-9_$#]*`, unlike the `\w`-based identifier matching used
+  for non-Oracle SQL elsewhere in this file, which is Unicode-aware by
+  default). The leading character class is now `[^\W\d]` instead of
+  `[A-Za-z_]`, so PL/SQL identifiers are Unicode-aware like the rest of the
+  file while still correctly handling Oracle's `$`/`#` mid-identifier
+  characters.
+
 ## [2.3.8] - 2026-08-21
 
 ### Added
